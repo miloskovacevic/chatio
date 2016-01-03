@@ -7,6 +7,6 @@
     "express":"*"
   },
   "scripts": {
-    "start": "node app-server.js "
+    "start": "node app.js "
   }
 }
