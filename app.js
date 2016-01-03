@@ -4,6 +4,8 @@ var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 var path = require('path');
 
+var usernames = [];
+
 server.listen(process.env.PORT || 3000, function(){
     console.log("Server is listening on port 3000 or " + process.env.PORT);
 });
@@ -18,8 +20,32 @@ app.get('/', function (req, res) {
 });
 
 io.sockets.on('connection', function(socket){
+
+    socket.on('new user', function (data, callback) {
+        if(usernames.indexOf(data) != -1){
+            callback(false);
+        }else {
+            callback(true);
+            socket.username = data;
+            usernames.push(socket.username);
+            updateUsernames();
+        }
+    });
+
+    //update usernames
+    function updateUsernames(){
+        io.sockets.emit('usernames', usernames);
+    }
     //send message
     socket.on('send message', function (data) {
-        io.sockets.emit('new message', {msg: data});
+        io.sockets.emit('new message', {msg: data, user: socket.username});
+    });
+
+    //disconnect
+    socket.on('disconnect', function (data) {
+        //clear from usernames...
+        if(!socket.username) return;
+        usernames.splice(usernames.indexOf(socket.username), 1);
+        updateUsernames();
     });
 });
